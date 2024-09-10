@@ -2,10 +2,18 @@ const bcryptjs = require("bcryptjs");
 const User = require("../model/user_schema");
 const { hashhass_password } = require("../utils/hass_password");
 const { generate_token } = require("../utils/generate_token");
-
+const { validationResult } = require('express-validator');
 exports.register = async (req, res) =>{
     
-    const { username, email, password, contact } = await req.body;
+  const { username, email, password, contact } = await req.body;
+  
+   const errors = validationResult(req);
+  
+    if (!errors.isEmpty()) {
+      // Return errors if validation fails
+      return res.status(400).json({ errors: errors.array()[0] });
+    }
+  
 
     try {
         const find_user = await User.findOne({ email })
@@ -30,8 +38,13 @@ exports.register = async (req, res) =>{
 
 exports.login =async (req, res) => {
   const { email, password } = req.body;
-    const date = new Date("2024-02-20T10:10:00")
-    console.log(date)
+    // Check for validation errors
+  const errors = validationResult(req);
+  
+    if (!errors.isEmpty()) {
+      // Return errors if validation fails
+      return res.status(400).json({ errors: errors.array()[0] });
+    }
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -44,7 +57,7 @@ exports.login =async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const payload = { userId: user._id };
+    const payload = { userId: user._id, username:user.username };
 
    const token = await generate_token(payload)
    

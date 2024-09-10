@@ -20,6 +20,9 @@ const TaskSchema = new mongoose.Schema({
   dueDate: {
     type: Date,
   },
+  startDate: {
+    type: Date,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

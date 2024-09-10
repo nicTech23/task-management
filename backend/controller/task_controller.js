@@ -1,17 +1,29 @@
 const Task = require("../model/task_schema");
+const { validationResult } = require('express-validator');
 
 exports.create_task = async(req, res)=>{
-    const { title, description, dueDate } = req.body
-    const {user} = req.params
+    const { title, description, dueDate, startDate } = req.body
     
-    try {
-        const date = new Date(dueDate)
+    const id = req.user
 
-        const exist_date = await Task.findOne({dueDate: date})
+    const errors = validationResult(req);
+  
+    if (!errors.isEmpty()) {
+      // Return errors if validation fails
+      return res.status(400).json({ errors: errors.array()[0] });
+    }
+
+    try {
+        const due_date = new Date(dueDate)
+        const start_date = new Date(startDate) 
+
+        if(startDate > dueDate) throw new Error("Start date is ahead of due date")
+
+        const exist_date = await Task.findOne({ startDate: start_date })
         
         if (exist_date) throw new Error("Date and time already scheduled")
         
-        const new_task = await Task.create({ title, description, dueDate, user })
+        const new_task = await Task.create({ title, description, dueDate: due_date, startDate:start_date, user:id })
         
         if (!new_task) throw new Error("Task creating fails")
         
@@ -24,16 +36,30 @@ exports.create_task = async(req, res)=>{
 
 // Update an existing task by id
 exports.update_task = async (req, res) => {
+    //const id = req.user
+
+    const errors = validationResult(req);
+  
+    if (!errors.isEmpty()) {
+      // Return errors if validation fails
+      return res.status(400).json({ errors: errors.array()[0] });
+    }
+
     const { id } = req.params;
 
-    const { title, description, dueDate } = req.body;
+    const { title, description, dueDate, startDate } = req.body
+
+     const due_date = new Date(dueDate)
+     const start_date = new Date(startDate) 
 
     try {
-        const task = await Task.findById({_id:id});
-
+        if (startDate > dueDate) throw new Error("Start date is ahead of due date")
+        
+        const task = await Task.findById({ _id: id });
+        
         if (!task) throw new Error("Task not found");
 
-        const exist_date = await Task.findOne({ dueDate });
+        const exist_date = await Task.findOne({ start_date });
 
         if (exist_date && exist_date._id.toString() !== id) {
             throw new Error("Date and time already scheduled");
@@ -41,7 +67,8 @@ exports.update_task = async (req, res) => {
 
         task.title = title || task.title;
         task.description = description || task.description;
-        task.dueDate = dueDate || task.dueDate;
+        task.dueDate = due_date || task.dueDate;
+        task.startDate = start_date || task.startDate;
 
         const updated_task = await task.save();
 
@@ -74,8 +101,10 @@ exports.delete_task = async (req, res) => {
 
 exports.all_tasks = async(req, res)=>{
     try {
-        const tasks = await Task.find()
-
+        const userId = req.user
+        
+        const tasks = await Task.find({user:userId})
+        console.log("task", tasks)
         if (!tasks || tasks.length <= 0) throw new Error("No tasks found")
         
         res.status(200).json({message: tasks})
