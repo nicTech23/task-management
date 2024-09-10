@@ -16,7 +16,10 @@ exports.create_task = async(req, res)=>{
     try {
         const due_date = new Date(dueDate)
         const start_date = new Date(startDate) 
+        const now = new Date();
 
+        if (now > start_date) throw new Error("Date has already passed")
+        
         if(startDate > dueDate) throw new Error("Start date is ahead of due date")
 
         const exist_date = await Task.findOne({ startDate: start_date })

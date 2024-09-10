@@ -67,8 +67,20 @@ const TaskContent = () => {
                 <tbody>
                    {
                     allTask?.map((data, index)=>{
-                        const startDate = new Date(data.startDate); 
+                         const startDate = new Date(data.startDate); 
                         const dueDate = new Date(data.dueDate); 
+                        const now = new Date();
+                        const todayDate = new Date(now.getTime() - 1 * 60 * 1000);
+
+                        let color = "black"
+
+                        if (todayDate > dueDate) {
+                            color = "red"
+                        } else {
+                            color = "black"
+                        }
+
+                        
                         const formattedStartDate = startDate.toISOString().replace('T', ' ').substring(0, 19);  
                         const formattedDueDate = dueDate.toISOString().replace('T', ' ').substring(0, 19);  
                         return (
@@ -82,7 +94,7 @@ const TaskContent = () => {
                                 <td className="px-6 py-4">
                                     {formattedStartDate}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" style={{color:color}}>
                                     {formattedDueDate }
                                 </td>
                                 <td className="px-6 py-4 text-right flex space-x-3">
